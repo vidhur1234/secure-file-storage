@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fas fa-shield-alt text-primary me-2"></i> Security Audit Logs</h3>
+                <p class="text-muted mb-0">Immutable tracking of logins, file access, authorization attempts, and tamper alarms</p>
+            </div>
+            <button class="btn btn-outline-primary" onclick="loadAuditLogs()">
+                <i class="fas fa-arrows-rotate me-1"></i> Refresh Logs
+            </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="cyber-card mb-4">
+            <div class="p-3 d-flex gap-2 flex-wrap align-items-center">
+                <span class="small fw-bold text-uppercase text-muted me-2"><i class="fas fa-filter me-1"></i> Quick Filter:</span>
+                <button class="btn btn-sm btn-outline-secondary active filter-btn" onclick="filterLogs('ALL', this)">All Events</button>
+                <button class="btn btn-sm btn-outline-success filter-btn" onclick="filterLogs('VERIFIED', this)">Integrity Verified</button>
+                <button class="btn btn-sm btn-outline-danger filter-btn" onclick="filterLogs('TAMPERED', this)">Tamper Alarms</button>
+                <button class="btn btn-sm btn-outline-warning text-dark filter-btn" onclick="filterLogs('FORBIDDEN', this)">Unauthorized Attempts (403)</button>
+                <button class="btn btn-sm btn-outline-info text-dark filter-btn" onclick="filterLogs('UPLOAD', this)">Uploads</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" onclick="filterLogs('LOGIN', this)">Auth / Logins</button>
+            </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-list-check text-secondary me-2"></i> Audit Trail Activity Log</span>
+                <span id="logCountBadge" class="badge bg-secondary">0 entries</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Username</th>
+                            <th>Action</th>
+                            <th>File ID</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Details &amp; Findings</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Loading audit records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth(['ROLE_ADMIN', 'ROLE_AUDITOR']);
+
+        let allLogs = [];
+
+        async function loadAuditLogs() {
+            try {
+                const res = await apiFetch('/api/audit-logs');
+                if (!res.ok) throw new Error('Failed to fetch audit records');
+                const json = await res.json();
+                allLogs = json.data || [];
+                renderLogs(allLogs);
+            } catch (err) {
+                showAlert('Error loading audit logs: ' + err.message);
+            }
+        }
+
+        function renderLogs(logs) {
+            document.getElementById('logCountBadge').innerText = `${logs.length} entries`;
+            const tbody = document.getElementById('auditTableBody');
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No audit logs match current criteria.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => {
+                let statusBadge = '<span class="badge bg-success">SUCCESS</span>';
+                let rowClass = '';
+
+                if (l.status === 'TAMPERED') {
+                    statusBadge = '<span class="badge bg-danger"><i class="fas fa-triangle-exclamation me-1"></i>TAMPERED</span>';
+                    rowClass = 'table-danger';
+                } else if (l.status === 'FORBIDDEN') {
+                    statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-ban me-1"></i>FORBIDDEN</span>';
+                    rowClass = 'table-warning';
+                } else if (l.status === 'FAILURE') {
+                    statusBadge = '<span class="badge bg-danger">FAILURE</span>';
+                } else if (l.status === 'INTEGRITY_VERIFIED') {
+                    statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>VERIFIED</span>';
+                }
+
+                return `
+                    <tr class="${rowClass}">
+                        <td><small class="text-muted">#${l.id}</small></td>
+                        <td><small>${l.timestamp ? l.timestamp.replace('T', ' ').substring(0, 19) : '-'}</small></td>
+                        <td><strong>${l.username}</strong></td>
+                        <td><span class="badge bg-light text-dark border">${l.action}</span></td>
+                        <td>${l.fileId ? '#' + l.fileId : '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td><small>${l.ipAddress || '-'}</small></td>
+                        <td><small class="text-secondary">${l.details || '-'}</small></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterLogs(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (type === 'ALL') {
+                renderLogs(allLogs);
+            } else if (type === 'VERIFIED') {
+                renderLogs(allLogs.filter(l => l.status === 'INTEGRITY_VERIFIED'));
+            } else if (type === 'TAMPERED') {
+                renderLogs(allLogs.filter(l => l.status === 'TAMPERED'));
+            } else if (type === 'FORBIDDEN') {
+                renderLogs(allLogs.filter(l => l.status === 'FORBIDDEN' || l.action.includes('UNAUTHORIZED')));
+            } else if (type === 'UPLOAD') {
+                renderLogs(allLogs.filter(l => l.action === 'FILE_UPLOAD'));
+            } else if (type === 'LOGIN') {
+                renderLogs(allLogs.filter(l => l.action.includes('LOGIN')));
+            }
+        }
+
+        loadAuditLogs();
+    </script>
+</body>
+</html>

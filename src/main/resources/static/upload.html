@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Upload - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        .upload-dropzone {
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .upload-dropzone:hover, .upload-dropzone.dragover {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <div class="mb-4">
+            <h3 class="fw-bold mb-1"><i class="fas fa-file-shield text-primary me-2"></i> Secure File Upload</h3>
+            <p class="text-muted mb-0">Upload documents with automatic in-memory AES-256-GCM encryption and SHA-256 hashing</p>
+        </div>
+
+        <!-- Cryptographic Workflow Card -->
+        <div class="demo-box mb-4">
+            <h6 class="fw-bold text-success mb-2"><i class="fas fa-lock me-2"></i> How Your File Is Protected During Upload:</h6>
+            <div class="row g-2 small text-secondary">
+                <div class="col-md-3"><strong>1. SHA-256 Digest:</strong> Original plaintext hashed to generate integrity fingerprint.</div>
+                <div class="col-md-3"><strong>2. AES-256-GCM:</strong> A unique 256-bit AES key &amp; 12-byte IV encrypts file bytes in RAM.</div>
+                <div class="col-md-3"><strong>3. Envelope Security:</strong> File key is wrapped using Server Master Key before DB storage.</div>
+                <div class="col-md-3"><strong>4. Zero Plaintext Disk:</strong> ONLY ciphertext (<span class="hash-code">.enc</span>) written to disk.</div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-cloud-arrow-up text-primary me-2"></i> Select File &amp; Access Role</span>
+                    </div>
+                    <div class="p-4">
+                        <form id="uploadForm">
+                            <!-- Dropzone -->
+                            <div class="upload-dropzone mb-3" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-cloud-arrow-up fa-3x text-primary mb-2"></i>
+                                <h6 class="fw-bold mb-1" id="dropzoneText">Click or Drag &amp; Drop a file here to encrypt</h6>
+                                <p class="small text-muted mb-0" id="fileInfoText">Supports PDF, DOCX, TXT, Images, CSV, etc. (Max 50MB)</p>
+                                <input type="file" id="fileInput" class="d-none" required>
+                            </div>
+
+                            <!-- Target Role Selector -->
+                            <div class="mb-4">
+                                <label for="targetRoleId" class="form-label small fw-semibold">
+                                    <i class="fas fa-user-tag me-1 text-secondary"></i> Target Access Role (RBAC Level)
+                                </label>
+                                <select id="targetRoleId" class="form-select" required>
+                                    <option value="">Loading roles...</option>
+                                </select>
+                                <div class="form-text">
+                                    Controls which roles in the hierarchy will be allowed to decrypt this file.
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="uploadBtn">
+                                <i class="fas fa-lock me-2"></i> Encrypt with AES-256 &amp; Upload
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Details & Confirmation Result -->
+            <div class="col-lg-5">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-file-circle-check text-success me-2"></i> Encryption Receipt</span>
+                    </div>
+                    <div class="p-4" id="receiptContainer">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-shield-cat fa-3x mb-3 text-secondary opacity-50"></i>
+                            <h6>No file uploaded in this session yet</h6>
+                            <p class="small">Upload a document to inspect its generated SHA-256 fingerprint, IV, and cipher path.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth();
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const dropzoneText = document.getElementById('dropzoneText');
+        const fileInfoText = document.getElementById('fileInfoText');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                const f = fileInput.files[0];
+                dropzoneText.innerHTML = `<span class="text-success"><i class="fas fa-file me-2"></i> ${f.name}</span>`;
+                fileInfoText.innerText = `Size: ${(f.size / 1024).toFixed(2)} KB | Type: ${f.type || 'Binary'}`;
+            }
+        });
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                const f = fileInput.files[0];
+                dropzoneText.innerHTML = `<span class="text-success"><i class="fas fa-file me-2"></i> ${f.name}</span>`;
+                fileInfoText.innerText = `Size: ${(f.size / 1024).toFixed(2)} KB | Type: ${f.type || 'Binary'}`;
+            }
+        });
+
+        async function loadRoles() {
+            try {
+                const res = await apiFetch('/api/roles');
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    const select = document.getElementById('targetRoleId');
+                    select.innerHTML = json.data.map(r => {
+                        let hint = '';
+                        if (r.name === 'ROLE_ADMIN') hint = ' (Admin Only)';
+                        else if (r.name === 'ROLE_MANAGER') hint = ' (Manager + Admin)';
+                        else if (r.name === 'ROLE_EMPLOYEE') hint = ' (Employee + Manager + Admin)';
+                        else if (r.name === 'ROLE_AUDITOR') hint = ' (Auditor + Admin)';
+                        return `<option value="${r.id}">${r.name}${hint}</option>`;
+                    }).join('');
+
+                    // Default select based on current user role
+                    const currentUser = getCurrentUser();
+                    if (currentUser && currentUser.roles) {
+                        if (currentUser.roles.includes('ROLE_EMPLOYEE')) {
+                            const empOption = Array.from(select.options).find(o => o.text.includes('ROLE_EMPLOYEE'));
+                            if (empOption) empOption.selected = true;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading roles:', err);
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showAlert('Please select a file to upload.');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Encrypting with AES-256-GCM...';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('targetRoleId', document.getElementById('targetRoleId').value);
+
+            try {
+                const res = await apiFetch('/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const json = await res.json();
+
+                if (res.ok && json.success) {
+                    showAlert('File successfully encrypted and stored!', 'success');
+                    renderReceipt(json.data);
+                    document.getElementById('uploadForm').reset();
+                    dropzoneText.innerText = 'Click or Drag & Drop a file here to encrypt';
+                    fileInfoText.innerText = 'Supports PDF, DOCX, TXT, Images, CSV, etc. (Max 50MB)';
+                } else {
+                    showAlert(json.message || 'Upload failed');
+                }
+            } catch (err) {
+                showAlert('Upload error: ' + err.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-lock me-2"></i> Encrypt with AES-256 &amp; Upload';
+            }
+        });
+
+        function renderReceipt(file) {
+            document.getElementById('receiptContainer').innerHTML = `
+                <div class="alert alert-success d-flex align-items-center mb-3">
+                    <i class="fas fa-circle-check fa-2x me-3"></i>
+                    <div>
+                        <strong class="d-block">AES-256 Encryption Completed</strong>
+                        <small>Plaintext removed from RAM. Stored strictly in ciphertext.</small>
+                    </div>
+                </div>
+
+                <ul class="list-group list-group-flush small mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Original File:</span>
+                        <strong>${file.fileName}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Target RBAC Role:</span>
+                        <span class="badge bg-primary">${file.targetRoleName}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Ciphertext Filename:</span>
+                        <span class="hash-code text-danger">${file.encryptedPath}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">AES-GCM Nonce (IV):</span>
+                        <span class="hash-code">${file.iv}</span>
+                    </li>
+                    <li class="list-group-item">
+                        <span class="text-muted d-block mb-1">SHA-256 Integrity Hash:</span>
+                        <span class="hash-code text-break text-success">${file.fileHash}</span>
+                    </li>
+                </ul>
+
+                <div class="d-grid gap-2">
+                    <a href="/files.html" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-folder-open me-1"></i> View Accessible Files List
+                    </a>
+                </div>
+            `;
+        }
+
+        loadRoles();
+    </script>
+</body>
+</html>

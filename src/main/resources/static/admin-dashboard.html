@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <!-- Welcome Banner -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fas fa-gauge-high text-primary me-2"></i> System Dashboard</h3>
+                <p class="text-muted mb-0">Overview of encryption status, access control, and storage metrics</p>
+            </div>
+            <div id="userBadgeArea"></div>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-value" id="statUsers">-</div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-value" id="statActiveUsers">-</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card purple">
+                    <div class="stat-value" id="statFiles">-</div>
+                    <div class="stat-label">Encrypted Files</div>
+                    <div class="stat-icon"><i class="fas fa-file-shield"></i></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card amber">
+                    <div class="stat-value" id="statRoles">-</div>
+                    <div class="stat-label">Configured Roles</div>
+                    <div class="stat-icon"><i class="fas fa-sitemap"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Architecture & Security Controls Status -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-shield-virus text-primary me-2"></i> Cryptographic &amp; Security Controls</span>
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> All Systems Active</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle p-2 bg-primary text-white me-3">
+                                            <i class="fas fa-key fa-fw"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">AES-256-GCM Encryption</h6>
+                                            <small class="text-muted">Authenticated Cipher (Zero Plaintext on Disk)</small>
+                                        </div>
+                                    </div>
+                                    <p class="small text-secondary mb-0">
+                                        Every uploaded file receives a unique 256-bit AES key and 12-byte nonce/IV. Plaintext never touches disk storage.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle p-2 bg-success text-white me-3">
+                                            <i class="fas fa-fingerprint fa-fw"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">SHA-256 Integrity Verification</h6>
+                                            <small class="text-muted">Cryptographic Digest Matching</small>
+                                        </div>
+                                    </div>
+                                    <p class="small text-secondary mb-0">
+                                        Original file hash is verified byte-by-byte upon download to detect ransomware tampering or file corruption immediately.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle p-2 bg-warning text-dark me-3">
+                                            <i class="fas fa-network-wired fa-fw"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Hierarchical RBAC</h6>
+                                            <small class="text-muted">ADMIN &gt; MANAGER &gt; EMPLOYEE</small>
+                                        </div>
+                                    </div>
+                                    <p class="small text-secondary mb-0">
+                                        Backend checks enforce permission inheritance. Unauthorized download attempts trigger immediate 403 Forbidden.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle p-2 bg-info text-white me-3">
+                                            <i class="fas fa-list-check fa-fw"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Comprehensive Audit Trail</h6>
+                                            <small class="text-muted">Tampering &amp; Access Logging</small>
+                                        </div>
+                                    </div>
+                                    <p class="small text-secondary mb-0">
+                                        Logins, uploads, downloads, integrity checks, and unauthorized attempts are permanently logged with timestamps and IPs.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="col-lg-4">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-bolt text-warning me-2"></i> Quick Actions</span>
+                    </div>
+                    <div class="p-3 d-flex flex-column gap-2" id="quickActionsContainer">
+                        <a href="/upload.html" class="btn btn-outline-primary text-start py-2">
+                            <i class="fas fa-cloud-arrow-up me-2"></i> <strong>Encrypt &amp; Upload File</strong>
+                            <div class="small text-muted ps-4">Upload a document with role-based restriction</div>
+                        </a>
+                        <a href="/files.html" class="btn btn-outline-success text-start py-2">
+                            <i class="fas fa-folder-open me-2"></i> <strong>Accessible Files &amp; Search</strong>
+                            <div class="small text-muted ps-4">Download, decrypt, and verify files</div>
+                        </a>
+                        <div id="adminActions"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Audit Log Stream -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-history text-secondary me-2"></i> Recent Security Audit Events</span>
+                <a href="/audit-logs.html" class="btn btn-sm btn-outline-secondary">View Full Log</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentLogsTable">
+                        <tr><td colspan="6" class="text-center py-3 text-muted">Loading audit history...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth();
+
+        async function loadDashboard() {
+            const user = getCurrentUser();
+            if (user) {
+                const badgeClass = isAdmin() ? 'bg-danger' : (isManager() ? 'bg-warning text-dark' : (isAuditor() ? 'bg-info text-dark' : 'bg-primary'));
+                document.getElementById('userBadgeArea').innerHTML = `
+                    <span class="badge ${badgeClass} p-2 fs-6">
+                        <i class="fas fa-user-shield me-1"></i> Logged in as: <strong>${user.username}</strong> (${user.roles.join(', ')})
+                    </span>
+                `;
+
+                if (isAdmin()) {
+                    document.getElementById('adminActions').innerHTML = `
+                        <a href="/users.html" class="btn btn-outline-dark text-start py-2 w-100 mb-2">
+                            <i class="fas fa-user-gear me-2"></i> <strong>Manage Users</strong>
+                            <div class="small text-muted ps-4">Add, deactivate, or assign roles</div>
+                        </a>
+                        <a href="/roles.html" class="btn btn-outline-dark text-start py-2 w-100">
+                            <i class="fas fa-sitemap me-2"></i> <strong>Role Hierarchy</strong>
+                            <div class="small text-muted ps-4">Configure access relationships</div>
+                        </a>
+                    `;
+                }
+            }
+
+            // Load Stats
+            try {
+                const res = await apiFetch('/api/dashboard/stats');
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success) {
+                        const d = json.data;
+                        document.getElementById('statUsers').innerText = d.totalUsers;
+                        document.getElementById('statActiveUsers').innerText = d.activeUsers;
+                        document.getElementById('statFiles').innerText = d.totalFiles;
+                        document.getElementById('statRoles').innerText = d.totalRoles;
+                    }
+                }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+
+            // Load Recent Audit Logs
+            try {
+                const auditRes = await apiFetch('/api/audit-logs');
+                if (auditRes.ok) {
+                    const json = await auditRes.json();
+                    const tbody = document.getElementById('recentLogsTable');
+                    if (json.success && json.data && json.data.length > 0) {
+                        tbody.innerHTML = json.data.slice(0, 6).map(log => {
+                            let statusBadge = '<span class="badge bg-success">SUCCESS</span>';
+                            if (log.status === 'TAMPERED') {
+                                statusBadge = '<span class="badge bg-danger">TAMPERED!</span>';
+                            } else if (log.status === 'FORBIDDEN' || log.status === 'FAILURE') {
+                                statusBadge = '<span class="badge bg-warning text-dark">' + log.status + '</span>';
+                            } else if (log.status === 'INTEGRITY_VERIFIED') {
+                                statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>VERIFIED</span>';
+                            }
+
+                            return `
+                                <tr>
+                                    <td><small class="text-muted">${log.timestamp ? log.timestamp.replace('T', ' ').substring(0, 19) : '-'}</small></td>
+                                    <td><strong>${log.username}</strong></td>
+                                    <td><span class="badge bg-light text-dark border">${log.action}</span></td>
+                                    <td>${statusBadge}</td>
+                                    <td><small>${log.ipAddress || '-'}</small></td>
+                                    <td><small class="text-secondary">${log.details || '-'}</small></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No audit logs recorded yet.</td></tr>';
+                    }
+                } else if (auditRes.status === 403) {
+                    document.getElementById('recentLogsTable').innerHTML = `
+                        <tr><td colspan="6" class="text-center py-3 text-muted">
+                            <i class="fas fa-lock me-1"></i> Audit log viewing requires ADMIN or AUDITOR role.
+                        </td></tr>
+                    `;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

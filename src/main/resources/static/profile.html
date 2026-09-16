@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <div class="mb-4">
+            <h3 class="fw-bold mb-1"><i class="fas fa-id-card text-primary me-2"></i> User Profile &amp; Security Credentials</h3>
+            <p class="text-muted mb-0">Manage your authenticated credentials and review your personal security audit logs</p>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Profile Card -->
+            <div class="col-lg-5">
+                <div class="cyber-card">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-user-shield text-primary me-2"></i> Account Details</span>
+                    </div>
+                    <div class="p-4" id="profileDetailsContainer">
+                        <div class="text-center py-4 text-muted">
+                            <span class="spinner-border spinner-border-sm me-2"></span> Loading profile...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Permissions Card -->
+            <div class="col-lg-7">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-key text-warning me-2"></i> Your Granted System Permissions</span>
+                    </div>
+                    <div class="p-4" id="permissionsContainer">
+                        <div class="text-center py-4 text-muted">
+                            <span class="spinner-border spinner-border-sm me-2"></span> Loading permissions...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Audit Trail -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-clock-rotate-left text-secondary me-2"></i> Your Recent Session Activity</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myAuditTableBody">
+                        <tr><td colspan="5" class="text-center py-3 text-muted">Loading your activity...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth();
+
+        async function loadProfile() {
+            try {
+                const res = await apiFetch('/api/auth/me');
+                if (!res.ok) throw new Error('Failed to load user profile');
+                const json = await res.json();
+                const user = json.data;
+
+                const roleBadges = Array.from(user.roles || []).map(r => {
+                    let cls = 'badge-role-employee';
+                    if (r.includes('ADMIN')) cls = 'badge-role-admin';
+                    else if (r.includes('MANAGER')) cls = 'badge-role-manager';
+                    else if (r.includes('AUDITOR')) cls = 'badge-role-auditor';
+                    return `<span class="badge ${cls} me-1 fs-6">${r}</span>`;
+                }).join('');
+
+                document.getElementById('profileDetailsContainer').innerHTML = `
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary text-white p-3 me-3 fs-3">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">${user.fullName}</h5>
+                            <small class="text-muted">@${user.username}</small>
+                        </div>
+                    </div>
+
+                    <ul class="list-group list-group-flush small mb-3">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Email:</span>
+                            <strong>${user.email}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Account Status:</span>
+                            <span class="badge bg-success">Active &bull; Verified</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Assigned Roles:</span>
+                            <div>${roleBadges}</div>
+                        </li>
+                        <li class="list-group-item">
+                            <span class="text-muted d-block mb-1">Assigned Secret Key:</span>
+                            <span class="hash-code">${user.secretKey || 'SEC-KEY-DEFAULT'}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Member Since:</span>
+                            <small>${user.createdAt ? user.createdAt.replace('T', ' ').substring(0, 10) : '2026'}</small>
+                        </li>
+                    </ul>
+                `;
+
+                // Permissions list
+                const authUser = getCurrentUser();
+                const perms = authUser && authUser.permissions ? authUser.permissions : [];
+                document.getElementById('permissionsContainer').innerHTML = `
+                    <p class="text-muted small mb-3">
+                        The following cryptographic and operational permissions are bound to your user identity by Spring Security:
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        ${perms.map(p => `
+                            <div class="p-2 border rounded bg-light d-flex align-items-center">
+                                <i class="fas fa-circle-check text-success me-2"></i>
+                                <span class="fw-semibold small">${p}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+            } catch (err) {
+                showAlert('Error loading profile: ' + err.message);
+            }
+
+            // Load Personal Activity
+            try {
+                const actRes = await apiFetch('/api/audit-logs/my');
+                if (actRes.ok) {
+                    const actJson = await actRes.json();
+                    const tbody = document.getElementById('myAuditTableBody');
+                    const logs = actJson.data || [];
+                    if (logs.length > 0) {
+                        tbody.innerHTML = logs.map(l => `
+                            <tr>
+                                <td><small>${l.timestamp ? l.timestamp.replace('T', ' ').substring(0, 19) : '-'}</small></td>
+                                <td><span class="badge bg-light text-dark border">${l.action}</span></td>
+                                <td><span class="badge bg-success">${l.status}</span></td>
+                                <td><small>${l.ipAddress || '-'}</small></td>
+                                <td><small class="text-secondary">${l.details || '-'}</small></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">No personal logs recorded yet.</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

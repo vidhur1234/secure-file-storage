@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: secure-file-storage
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ENCRYPTION_MASTER_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true

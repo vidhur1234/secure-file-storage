@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles & Hierarchy - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        .hierarchy-box {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 180px;
+            text-align: center;
+        }
+        .arrow-down {
+            font-size: 1.5rem;
+            color: #64748b;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fas fa-sitemap text-primary me-2"></i> Role-Based Access Control (RBAC)</h3>
+                <p class="text-muted mb-0">Role hierarchy mapping, permissions definition, and access inheritance</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                <i class="fas fa-plus-circle me-1"></i> Create New Role
+            </button>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Role Hierarchy Visualizer -->
+            <div class="col-lg-5">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-network-wired text-primary me-2"></i> Inheritance Hierarchy</span>
+                        <span class="badge bg-primary">Transitive Access</span>
+                    </div>
+                    <div class="p-4 text-center">
+                        <p class="text-muted small text-start mb-3">
+                            <i class="fas fa-info-circle me-1 text-info"></i> Higher roles automatically inherit file access permissions of subordinate roles. Plaintext cannot cross upward without explicit rights.
+                        </p>
+
+                        <!-- ADMIN -->
+                        <div class="hierarchy-box bg-danger-subtle text-danger border border-danger">
+                            <i class="fas fa-crown me-2"></i> ROLE_ADMIN
+                            <div class="small text-muted fw-normal">Superuser &bull; All Files &bull; Full CRUD</div>
+                        </div>
+
+                        <div><i class="fas fa-arrow-down arrow-down"></i></div>
+
+                        <!-- MANAGER -->
+                        <div class="hierarchy-box bg-warning-subtle text-warning-emphasis border border-warning">
+                            <i class="fas fa-briefcase me-2"></i> ROLE_MANAGER
+                            <div class="small text-muted fw-normal">Team Files + Inherits Employee Files</div>
+                        </div>
+
+                        <div><i class="fas fa-arrow-down arrow-down"></i></div>
+
+                        <!-- EMPLOYEE -->
+                        <div class="hierarchy-box bg-primary-subtle text-primary border border-primary">
+                            <i class="fas fa-user me-2"></i> ROLE_EMPLOYEE
+                            <div class="small text-muted fw-normal">Standard Employee Files Only</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- AUDITOR (Parallel) -->
+                        <div class="hierarchy-box bg-info-subtle text-info-emphasis border border-info">
+                            <i class="fas fa-clipboard-check me-2"></i> ROLE_AUDITOR
+                            <div class="small text-muted fw-normal">Audit Compliance Track &bull; Read &amp; Logs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles & Permissions Table -->
+            <div class="col-lg-7">
+                <div class="cyber-card h-100">
+                    <div class="cyber-card-header">
+                        <span><i class="fas fa-key text-warning me-2"></i> Configured Roles &amp; Permissions</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Role Name</th>
+                                    <th>Description</th>
+                                    <th>Granted Permissions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rolesTableBody">
+                                <tr><td colspan="3" class="text-center py-4 text-muted">Loading roles...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Hierarchy Database Table -->
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-database text-secondary me-2"></i> Role Hierarchy Database Relations (role_hierarchy Table)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Parent Role (Superior)</th>
+                            <th>Inherits / Accesses</th>
+                            <th>Child Role (Subordinate)</th>
+                            <th>Rule Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hierarchyTableBody">
+                        <tr><td colspan="4" class="text-center py-3 text-muted">Loading hierarchy mappings...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Role Modal -->
+    <div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-shield-alt me-2 text-primary"></i> Create Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createRoleForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Role Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text">ROLE_</span>
+                                <input type="text" id="newRoleName" class="form-control" required placeholder="e.g. SUPERVISOR">
+                            </div>
+                            <small class="text-muted">Will be stored in uppercase with ROLE_ prefix.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Description</label>
+                            <input type="text" id="newRoleDesc" class="form-control" required placeholder="Description of role responsibilities">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Select Permissions</label>
+                            <div class="form-check">
+                                <input class="form-check-input perm-check" type="checkbox" value="FILE_UPLOAD" id="p1" checked>
+                                <label class="form-check-label" for="p1">FILE_UPLOAD</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input perm-check" type="checkbox" value="FILE_DOWNLOAD" id="p2" checked>
+                                <label class="form-check-label" for="p2">FILE_DOWNLOAD</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input perm-check" type="checkbox" value="FILE_SEARCH" id="p3" checked>
+                                <label class="form-check-label" for="p3">FILE_SEARCH</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input perm-check" type="checkbox" value="FILE_DELETE" id="p4">
+                                <label class="form-check-label" for="p4">FILE_DELETE</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input perm-check" type="checkbox" value="AUDIT_VIEW" id="p5">
+                                <label class="form-check-label" for="p5">AUDIT_VIEW</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Role</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth(['ROLE_ADMIN']);
+
+        async function loadRolesAndHierarchy() {
+            try {
+                // Roles
+                const rolesRes = await apiFetch('/api/roles');
+                const rolesJson = await rolesRes.json();
+                if (rolesRes.ok && rolesJson.success) {
+                    renderRoles(rolesJson.data);
+                }
+
+                // Hierarchy
+                const hierRes = await apiFetch('/api/roles/hierarchy');
+                const hierJson = await hierRes.json();
+                if (hierRes.ok && hierJson.success) {
+                    renderHierarchy(hierJson.data);
+                }
+            } catch (err) {
+                showAlert('Error loading data: ' + err.message);
+            }
+        }
+
+        function renderRoles(roles) {
+            const tbody = document.getElementById('rolesTableBody');
+            tbody.innerHTML = roles.map(r => {
+                const perms = Array.from(r.permissions || []).map(p =>
+                    `<span class="badge bg-light text-dark border me-1">${p}</span>`
+                ).join('') || '<span class="text-muted small">None</span>';
+
+                let badgeCls = 'bg-secondary';
+                if (r.name.includes('ADMIN')) badgeCls = 'bg-danger';
+                else if (r.name.includes('MANAGER')) badgeCls = 'bg-warning text-dark';
+                else if (r.name.includes('EMPLOYEE')) badgeCls = 'bg-primary';
+                else if (r.name.includes('AUDITOR')) badgeCls = 'bg-info text-dark';
+
+                return `
+                    <tr>
+                        <td><span class="badge ${badgeCls}">${r.name}</span></td>
+                        <td><small class="text-secondary">${r.description || '-'}</small></td>
+                        <td>${perms}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHierarchy(hierarchy) {
+            const tbody = document.getElementById('hierarchyTableBody');
+            if (hierarchy.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No hierarchy records found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = hierarchy.map(h => `
+                <tr>
+                    <td><strong class="text-primary">${h.parentRoleName}</strong></td>
+                    <td><i class="fas fa-arrow-right text-success me-2"></i> Inherits rights from</td>
+                    <td><strong class="text-secondary">${h.childRoleName}</strong></td>
+                    <td><span class="badge bg-success">Active Rule</span></td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('createRoleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const checkedPerms = Array.from(document.querySelectorAll('.perm-check:checked')).map(cb => cb.value);
+            const payload = {
+                name: document.getElementById('newRoleName').value.trim(),
+                description: document.getElementById('newRoleDesc').value.trim(),
+                permissions: checkedPerms
+            };
+
+            try {
+                const res = await apiFetch('/api/roles', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('Role created successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createRoleModal')).hide();
+                    document.getElementById('createRoleForm').reset();
+                    loadRolesAndHierarchy();
+                } else {
+                    showAlert(json.message || 'Failed to create role');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        });
+
+        loadRolesAndHierarchy();
+    </script>
+</body>
+</html>

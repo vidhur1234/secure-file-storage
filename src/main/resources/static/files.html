@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessible Files - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <!-- Integrity Verification Alert Banner (Triggered upon download check) -->
+        <div id="integrityBanner"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fas fa-folder-tree text-primary me-2"></i> Accessible Files</h3>
+                <p class="text-muted mb-0">Files you are authorized to view and decrypt based on your assigned role and hierarchy</p>
+            </div>
+            <a href="/upload.html" class="btn btn-primary" id="uploadLinkBtn">
+                <i class="fas fa-cloud-arrow-up me-1"></i> Upload New File
+            </a>
+        </div>
+
+        <!-- Search Bar (Encrypted File Search Prototype) -->
+        <div class="cyber-card mb-4">
+            <div class="p-3">
+                <form id="searchForm" class="row g-2 align-items-center">
+                    <div class="col-md-9">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-secondary"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search files by name/keyword (e.g., 'report', 'salary', 'project')...">
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-primary flex-fill">
+                            <i class="fas fa-filter me-1"></i> Search
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetSearch()">
+                            <i class="fas fa-rotate-left"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-2 small text-muted">
+                    <i class="fas fa-info-circle me-1 text-info"></i>
+                    <strong>Search Prototype:</strong> Searches metadata index while strictly enforcing RBAC filtering (you only see files authorized for your role).
+                </div>
+            </div>
+        </div>
+
+        <!-- Files List Table -->
+        <div class="cyber-card mb-4">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-file-shield text-secondary me-2"></i> Encrypted Files Repository</span>
+                <span id="fileCountBadge" class="badge bg-secondary">0 Files</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Owner</th>
+                            <th>Target Role</th>
+                            <th>Ciphertext Path</th>
+                            <th>SHA-256 Hash</th>
+                            <th>Size</th>
+                            <th>Uploaded</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTableBody">
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Loading files...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIVA DEMO & TAMPERING GUIDE CARD -->
+        <div class="cyber-card border-warning">
+            <div class="cyber-card-header bg-warning-subtle text-dark">
+                <span><i class="fas fa-flask-vial text-warning me-2"></i> <strong>Project Demo &amp; Tampering Verification Guide</strong></span>
+                <span class="badge bg-dark">Viva Demonstration</span>
+            </div>
+            <div class="p-4">
+                <h6 class="fw-bold mb-2"><i class="fas fa-circle-question me-1 text-primary"></i> How to demonstrate AES-256 &amp; SHA-256 Tamper Detection:</h6>
+                <ol class="small text-secondary mb-3">
+                    <li class="mb-1">All encrypted files are stored on disk in <code class="text-danger fw-bold">storage/encrypted/</code> as <code class="text-danger">&lt;UUID&gt;.enc</code>.</li>
+                    <li class="mb-1">Notice that if you open any <code class="text-danger">.enc</code> file in Notepad or VS Code, it contains <strong>pure random ciphertext</strong> — no plaintext words exist.</li>
+                    <li class="mb-1"><strong>Simulate Tampering (Attacker / Ransomware):</strong> Open any <code class="text-danger">.enc</code> file in Notepad, change/add/delete a single character, and save it.</li>
+                    <li class="mb-1">Click <strong>"Download &amp; Verify"</strong> on that file in this UI.</li>
+                    <li class="mb-1"><strong>The System will immediately catch it!</strong> AES-256-GCM authentication tag verification and SHA-256 digest comparison fail. The file download is aborted, an alert is displayed, and a <span class="badge bg-danger">TAMPERED</span> security incident is recorded in the Audit Logs!</li>
+                </ol>
+                <div class="p-3 bg-light border rounded">
+                    <small class="text-muted d-block mb-1"><strong>PowerShell command to tamper with a file for demo:</strong></small>
+                    <code class="text-dark small user-select-all">Add-Content -Path "storage\encrypted\*.enc" -Value "MALICIOUS_BYTES"</code>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth();
+
+        let filesList = [];
+
+        async function loadFiles(keyword = '') {
+            try {
+                const url = keyword ? `/api/files/search?keyword=${encodeURIComponent(keyword)}` : '/api/files';
+                const res = await apiFetch(url);
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    filesList = json.data || [];
+                    renderFiles(filesList);
+                } else {
+                    showAlert(json.message || 'Failed to load files');
+                }
+            } catch (err) {
+                showAlert('Error loading files: ' + err.message);
+            }
+        }
+
+        function renderFiles(files) {
+            document.getElementById('fileCountBadge').innerText = `${files.length} Files Accessible`;
+            const tbody = document.getElementById('filesTableBody');
+
+            if (files.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="fas fa-folder-open fa-2x mb-2 d-block text-secondary opacity-50"></i>
+                            No files accessible for your current role or search keyword.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const currentUser = getCurrentUser();
+
+            tbody.innerHTML = files.map(f => {
+                let roleBadgeCls = 'badge-role-employee';
+                if (f.targetRoleName.includes('ADMIN')) roleBadgeCls = 'badge-role-admin';
+                else if (f.targetRoleName.includes('MANAGER')) roleBadgeCls = 'badge-role-manager';
+                else if (f.targetRoleName.includes('AUDITOR')) roleBadgeCls = 'badge-role-auditor';
+
+                const canDelete = isAdmin() || (currentUser && currentUser.id === f.ownerId);
+
+                return `
+                    <tr>
+                        <td>
+                            <i class="fas fa-file-lines text-primary me-2"></i>
+                            <strong>${f.fileName}</strong>
+                        </td>
+                        <td><small>${f.ownerUsername || 'Unknown'}</small></td>
+                        <td><span class="badge ${roleBadgeCls}">${f.targetRoleName}</span></td>
+                        <td><small class="hash-code text-danger">${f.encryptedPath}</small></td>
+                        <td>
+                            <span class="hash-code text-success" title="${f.fileHash}">
+                                ${f.fileHash ? f.fileHash.substring(0, 10) + '...' + f.fileHash.substring(56) : '-'}
+                            </span>
+                        </td>
+                        <td><small>${(f.fileSize / 1024).toFixed(1)} KB</small></td>
+                        <td><small class="text-muted">${f.uploadDate ? f.uploadDate.replace('T', ' ').substring(0, 16) : '-'}</small></td>
+                        <td class="text-end">
+                            <button class="btn btn-success btn-sm me-1" onclick="downloadFile(${f.id}, '${f.fileName}')" title="Decrypt and Verify Integrity">
+                                <i class="fas fa-download me-1"></i> Decrypt &amp; Verify
+                            </button>
+                            ${canDelete ? `
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteFile(${f.id}, '${f.fileName}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function downloadFile(fileId, fileName) {
+            const banner = document.getElementById('integrityBanner');
+            banner.innerHTML = `
+                <div class="alert alert-info d-flex align-items-center">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Checking RBAC Authorization &bull; Decrypting with AES-256 &bull; Verifying SHA-256 Integrity...</span>
+                </div>
+            `;
+
+            try {
+                const res = await apiFetch(`/api/files/${fileId}/download`);
+
+                if (res.status === 403) {
+                    banner.innerHTML = `
+                        <div class="alert alert-danger d-flex align-items-center">
+                            <i class="fas fa-ban fa-2x me-3"></i>
+                            <div>
+                                <strong>Access Denied (HTTP 403 Forbidden)</strong>
+                                <div>You are not authorized to access this file according to RBAC hierarchy rules.</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!res.ok) {
+                    // Possible Tampering / Integrity failure
+                    let errMessage = 'Download failed';
+                    try {
+                        const errJson = await res.json();
+                        errMessage = errJson.message || errMessage;
+                    } catch (e) {}
+
+                    banner.innerHTML = `
+                        <div class="alert alert-danger d-flex align-items-center">
+                            <i class="fas fa-triangle-exclamation fa-2x me-3"></i>
+                            <div>
+                                <strong class="fs-5">✗ File Integrity Verification Failed!</strong>
+                                <div class="mt-1">${errMessage}</div>
+                                <small class="d-block mt-1 text-dark">Ciphertext was modified or corrupted on disk. Decryption aborted to prevent security breach.</small>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // File verified and decrypted successfully
+                const integrityStatus = res.headers.get('X-Integrity-Status') || 'VERIFIED';
+                const fileHash = res.headers.get('X-File-Hash') || '';
+
+                banner.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center">
+                        <i class="fas fa-circle-check fa-2x me-3"></i>
+                        <div class="flex-grow-1">
+                            <strong class="fs-5">✓ File Integrity Verified!</strong>
+                            <div>SHA-256 hash match confirmed: <code class="text-dark bg-white px-2 py-1 rounded">${fileHash}</code></div>
+                            <small>Decrypted with AES-256-GCM successfully. Download started.</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Trigger file download in browser
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+
+            } catch (err) {
+                banner.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i> Error: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function deleteFile(fileId, fileName) {
+            if (!confirm(`Are you sure you want to permanently delete "${fileName}"?`)) return;
+
+            try {
+                const res = await apiFetch(`/api/files/${fileId}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('File deleted successfully.', 'success');
+                    loadFiles();
+                } else {
+                    showAlert(json.message || 'Failed to delete file');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const q = document.getElementById('searchInput').value.trim();
+            loadFiles(q);
+        });
+
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            loadFiles();
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>

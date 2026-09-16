@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Management - Secure File Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container container">
+        <div id="alert-container"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fas fa-users-gear text-primary me-2"></i> User Management</h3>
+                <p class="text-muted mb-0">Create, edit, activate/deactivate accounts and manage user secret keys</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <i class="fas fa-user-plus me-1"></i> Add New User
+            </button>
+        </div>
+
+        <div class="cyber-card">
+            <div class="cyber-card-header">
+                <span><i class="fas fa-table-list text-secondary me-2"></i> Registered Accounts</span>
+                <input type="text" id="userSearchInput" class="form-control form-control-sm w-auto d-inline-block" placeholder="Search users...">
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th>Secret Key</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-primary"></i> Create User Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createUserForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Username</label>
+                            <input type="text" id="newUsername" class="form-control" required placeholder="e.g. jdoe">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Password</label>
+                            <input type="password" id="newPassword" class="form-control" required placeholder="Min 6 characters">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Full Name</label>
+                            <input type="text" id="newFullName" class="form-control" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Email</label>
+                            <input type="email" id="newEmail" class="form-control" required placeholder="e.g. jdoe@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Assign Role</label>
+                            <select id="newRoleSelect" class="form-select" required>
+                                <option value="ROLE_EMPLOYEE">EMPLOYEE (Standard)</option>
+                                <option value="ROLE_MANAGER">MANAGER (Department)</option>
+                                <option value="ROLE_AUDITOR">AUDITOR (Read &amp; Logs)</option>
+                                <option value="ROLE_ADMIN">ADMIN (Full Control)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Create Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-user-pen me-2 text-warning"></i> Edit User Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Username</label>
+                            <input type="text" id="editUsername" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Full Name</label>
+                            <input type="text" id="editFullName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Email</label>
+                            <input type="email" id="editEmail" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">New Password (leave blank to keep current)</label>
+                            <input type="password" id="editPassword" class="form-control" placeholder="Leave blank if unchanged">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Assign Role</label>
+                            <select id="editRoleSelect" class="form-select" required>
+                                <option value="ROLE_EMPLOYEE">EMPLOYEE</option>
+                                <option value="ROLE_MANAGER">MANAGER</option>
+                                <option value="ROLE_AUDITOR">AUDITOR</option>
+                                <option value="ROLE_ADMIN">ADMIN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning"><i class="fas fa-check me-1"></i> Update User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        requireAuth(['ROLE_ADMIN']);
+
+        let usersList = [];
+
+        async function loadUsers() {
+            try {
+                const res = await apiFetch('/api/users');
+                if (!res.ok) throw new Error('Failed to load users');
+                const json = await res.json();
+                usersList = json.data || [];
+                renderUsers(usersList);
+            } catch (err) {
+                showAlert('Error loading users: ' + err.message);
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No users found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const roleBadges = Array.from(u.roles).map(r => {
+                    const cleanName = r.replace('ROLE_', '');
+                    let cls = 'badge-role-employee';
+                    if (cleanName === 'ADMIN') cls = 'badge-role-admin';
+                    else if (cleanName === 'MANAGER') cls = 'badge-role-manager';
+                    else if (cleanName === 'AUDITOR') cls = 'badge-role-auditor';
+                    return `<span class="badge ${cls} me-1">${cleanName}</span>`;
+                }).join('');
+
+                const statusBadge = u.active
+                    ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>'
+                    : '<span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>Inactive</span>';
+
+                const toggleActiveBtn = u.active
+                    ? `<button class="btn btn-outline-warning btn-sm" onclick="toggleActive(${u.id}, false)" title="Deactivate"><i class="fas fa-user-slash"></i></button>`
+                    : `<button class="btn btn-outline-success btn-sm" onclick="toggleActive(${u.id}, true)" title="Activate"><i class="fas fa-user-check"></i></button>`;
+
+                return `
+                    <tr>
+                        <td><small class="text-muted">#${u.id}</small></td>
+                        <td><strong>${u.username}</strong></td>
+                        <td>${u.fullName}</td>
+                        <td><small>${u.email}</small></td>
+                        <td>${roleBadges}</td>
+                        <td>${statusBadge}</td>
+                        <td><span class="hash-code">${u.secretKey ? u.secretKey.substring(0, 12) + '...' : 'None'}</span>
+                            <button class="btn btn-link btn-sm p-0 ms-1" onclick="regenerateKey(${u.id})" title="Regenerate Secret Key"><i class="fas fa-arrows-rotate text-secondary"></i></button>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="openEditModal(${u.id})" title="Edit"><i class="fas fa-pencil"></i></button>
+                                ${toggleActiveBtn}
+                                <button class="btn btn-outline-danger" onclick="deleteUser(${u.id}, '${u.username}')" title="Delete" ${u.username === 'admin' ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('userSearchInput').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = usersList.filter(u =>
+                u.username.toLowerCase().includes(q) ||
+                u.fullName.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q)
+            );
+            renderUsers(filtered);
+        });
+
+        // Create User
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                username: document.getElementById('newUsername').value.trim(),
+                password: document.getElementById('newPassword').value,
+                fullName: document.getElementById('newFullName').value.trim(),
+                email: document.getElementById('newEmail').value.trim(),
+                roles: [document.getElementById('newRoleSelect').value]
+            };
+
+            try {
+                const res = await apiFetch('/api/users', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('User created successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                    document.getElementById('createUserForm').reset();
+                    loadUsers();
+                } else {
+                    showAlert(json.message || 'Failed to create user');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        });
+
+        // Open Edit Modal
+        function openEditModal(userId) {
+            const user = usersList.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUsername').value = user.username;
+            document.getElementById('editFullName').value = user.fullName;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editPassword').value = '';
+
+            const primaryRole = user.roles && user.roles.length > 0 ? Array.from(user.roles)[0] : 'ROLE_EMPLOYEE';
+            document.getElementById('editRoleSelect').value = primaryRole;
+
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+
+        // Edit User Submit
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('editUserId').value;
+            const payload = {
+                fullName: document.getElementById('editFullName').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                roles: [document.getElementById('editRoleSelect').value]
+            };
+
+            const pwd = document.getElementById('editPassword').value;
+            if (pwd && pwd.trim().length > 0) {
+                payload.password = pwd.trim();
+            }
+
+            try {
+                const res = await apiFetch('/api/users/' + userId, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('User updated successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                    loadUsers();
+                } else {
+                    showAlert(json.message || 'Failed to update user');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        });
+
+        // Toggle Active
+        async function toggleActive(userId, makeActive) {
+            const endpoint = makeActive ? `/api/users/${userId}/activate` : `/api/users/${userId}/deactivate`;
+            try {
+                const res = await apiFetch(endpoint, { method: 'POST' });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert(`User ${makeActive ? 'activated' : 'deactivated'} successfully.`, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(json.message || 'Action failed');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        }
+
+        // Regenerate Secret Key
+        async function regenerateKey(userId) {
+            if (!confirm('Regenerate secret cryptographic key for this user?')) return;
+            try {
+                const res = await apiFetch(`/api/users/${userId}/secret-key`, { method: 'POST' });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('Secret key regenerated successfully.', 'success');
+                    loadUsers();
+                } else {
+                    showAlert(json.message || 'Failed to regenerate key');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        }
+
+        // Delete User
+        async function deleteUser(userId, username) {
+            if (!confirm(`Are you sure you want to permanently delete user "${username}"?`)) return;
+            try {
+                const res = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (res.ok && json.success) {
+                    showAlert('User deleted successfully.', 'success');
+                    loadUsers();
+                } else {
+                    showAlert(json.message || 'Failed to delete user');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message);
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+:root {
+    --primary-color: #0284c7;
+    --primary-hover: #0369a1;
+    --cyber-dark: #0f172a;
+    --cyber-card: #1e293b;
+    --cyber-border: #334155;
+    --cyber-cyan: #06b6d4;
+    --cyber-green: #10b981;
+    --cyber-red: #ef4444;
+    --cyber-yellow: #f59e0b;
+    --text-muted: #94a3b8;
+}
+
+body {
+    background-color: #f1f5f9;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Custom Navbar */
+.navbar-cyber {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-bottom: 2px solid #38bdf8;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #f8fafc !important;
+}
+
+.navbar-brand i {
+    color: #38bdf8;
+    margin-right: 8px;
+}
+
+.nav-link {
+    color: #cbd5e1 !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    padding: 8px 14px !important;
+    margin: 0 2px;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: #ffffff !important;
+    background-color: rgba(56, 189, 248, 0.15);
+}
+
+.nav-link.active {
+    border-bottom: 2px solid #38bdf8;
+}
+
+/* Content Container */
+.main-container {
+    flex: 1;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+
+/* Cyber Cards */
+.cyber-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+.cyber-card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stat-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card.blue {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+
+.stat-card.green {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+}
+
+.stat-card.purple {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+.stat-card.amber {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.25;
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.25rem;
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+/* Tables */
+.table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Badges */
+.badge-role-admin {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.badge-role-manager {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.badge-role-employee {
+    background-color: #e0f2fe;
+    color: #075985;
+    border: 1px solid #7dd3fc;
+}
+
+.badge-role-auditor {
+    background-color: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #c4b5fd;
+}
+
+.badge-verified {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    font-weight: 600;
+}
+
+.badge-tampered {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #f87171;
+    font-weight: 700;
+}
+
+/* Demo instructions alert box */
+.demo-box {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.demo-box-warning {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.hash-code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.8rem;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #0f172a;
+    word-break: break-all;
+}
+
+/* Footer */
+footer {
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 1.25rem 0;
+    margin-top: auto;
+    border-top: 1px solid #334155;
+    font-size: 0.85rem;
+}
